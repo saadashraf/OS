@@ -1,0 +1,113 @@
+
+#include <lib/x86.h>
+#include <lib/debug.h>
+
+#include "import.h"
+
+#define VM_USERLO 0x40000000
+#define VM_USERHI 0xF0000000
+#define VM_USERLO_PI  (VM_USERLO / PAGESIZE)   // VM_USERLO page index
+#define VM_USERHI_PI  (VM_USERHI / PAGESIZE)   // VM_USERHI page index
+#define PERM_USER (PTE_P | PTE_W)
+#define PERM_KERNEL (PTE_P | PTE_W | PTE_G)
+#define PT_PERM_PTU (PTE_P | PTE_W | PTE_U)
+#define PERMISSION_OUT_MASK 0xFFFFF000
+
+
+
+
+
+/** TASK 1:
+  * * Set the entire page map for process 0 as identity map.
+  *
+  * Hint 1: Note that part of the task is already completed by pdir_init.
+  * Hint 2: Here just set the remaining portion of process 0's page directory entry as identity map.
+  */
+void pdir_init_kern(unsigned int mbi_adr)
+{
+    // TODO: define your local variables here.
+    int i;
+    for(i = VM_USERLO_PI ; i < VM_USERHI_PI ; i++)
+    {
+      set_pdir_entry_identity(0 , i);
+    }
+    
+
+
+
+
+}
+
+/** TASK 2:
+  * * Map the physical page # [page_index] for the given virtual address with the given permission.
+  *   - In the case, when the page table for the page directory entry is not set up, you need to allocate the page table first.
+  *   - In the case of error, return the constant MagicNumber defined in lib/x86.h,
+  *     otherwise, return the physical page index registered in the page directory,
+  *     e.g., the return value of get_pdir_entry_by_va or alloc_ptbl.
+  * Hint 1: Get the pde for vadr
+  * Hint 2: If pde is already set, find the pde index. (pde / PAGESIZE)
+  *         Otherwise, first allocate the page table (MPTComm layer)
+  *         - If there is an error during allocation, return MagicNumber.
+  * Hint 3: If you have a valid pde, set the page table entry to new physical page (page_index) and perm.
+  * Hint 4: Return the pde index or MagicNumber.
+  */
+unsigned int map_page(unsigned int proc_index, unsigned int vadr, unsigned int page_index, unsigned int perm)
+{
+  // TODO
+  unsigned int pde =  get_pdir_entry_by_va(proc_index , vadr);
+  unsigned int pte_index , pde_index , pg_index;
+  if(pde > 0 )
+  {
+    pde_index = pde / PAGESIZE ;
+    pte_index = get_ptbl_entry_by_va(proc_index , vadr);
+    if(pte_index > 0)
+    {
+      set_ptbl_entry_by_va(proc_index , vadr , page_index , perm);
+      return pde;
+    }
+    else
+    {
+      pg_index = alloc_ptbl(proc_index , vadr);
+      if(pg_index == 0) return (unsigned int) (MagicNumber);
+      else
+      {
+        //set_ptbl_entry(proc_index , pde_index , pte_index , page_index , perm);
+        set_ptbl_entry_by_va(proc_index , vadr , page_index , perm);
+        return pg_index;
+      }
+    }
+    
+  }
+ 
+
+
+
+
+  //return 0;
+}
+
+/** TASK 3:
+  * * Remove the mapping for the given virtual address (with rmv_ptbl_entry_by_va).
+  * Hint 1: You need to first make sure that the mapping is still valid,
+  *         by reading the page table entry (pte) for the virtual address.
+  *         - Nothing should be done if the mapping no longer exists.
+  * Hint 2: If pte is valid, remove page table entry for vadr.
+  * Hint 3: Return the corresponding page table entry.
+  */
+unsigned int unmap_page(unsigned int proc_index, unsigned int vadr)
+{
+  // TODO
+  unsigned int pte;
+  pte = get_ptbl_entry_by_va(proc_index , vadr);
+  if(pte > 0)
+  {
+    rmv_ptbl_entry_by_va(proc_index , vadr);
+    return pte;
+  }
+
+
+
+
+
+  //return 0;
+}

@@ -1,0 +1,7 @@
+All the files are named after the tasks they perform.
+
+All the codes are commented and described how they work.
+
+This is done as a project for the semester, where tasks were arranged based on linux architecture and then executed.
+It has the bootloader, memory management(both physical and virtual), the kernel,process initialization and management,
+threads, multitasking with user and kernel processes, Trap and syscall handling with context switching etc.
